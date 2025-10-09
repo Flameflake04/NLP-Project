@@ -1,0 +1,7 @@
+numpy
+pandas
+nltk
+tensorflow
+scikit-learn
+keras
+sentence_transformers
