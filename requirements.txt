@@ -4,4 +4,8 @@ nltk
 tensorflow
 scikit-learn
 keras
+tf-keras
 sentence_transformers
+torch 
+torchvision
+torchaudio
