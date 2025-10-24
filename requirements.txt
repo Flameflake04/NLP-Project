@@ -9,3 +9,7 @@ sentence_transformers
 torch 
 torchvision
 torchaudio
+openai
+dotenv
+tabulate
+matplotlib
