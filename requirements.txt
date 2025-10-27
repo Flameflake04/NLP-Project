@@ -13,3 +13,4 @@ openai
 dotenv
 tabulate
 matplotlib
+pydot
