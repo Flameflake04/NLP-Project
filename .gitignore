@@ -217,4 +217,10 @@ __marimo__/
 .streamlit/secrets.toml
 
 # Model File
-glove.6B.300d.txt
+*.h5
+*.keras
+*.pkl
+glove*.txt
+*.vec
+*.bin
+
