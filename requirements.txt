@@ -14,3 +14,4 @@ dotenv
 tabulate
 matplotlib
 pydot
+evaluate
