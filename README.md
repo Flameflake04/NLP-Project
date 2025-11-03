@@ -104,7 +104,7 @@ Each record includes:
 
 ## Model 4: OpenAI Prompting (GPT-based Zero/Few-Shot)
 **Implementation Details**
-- Used GPT-4 API to prompt directly on each utterance:
+- Used GPT-5 API to prompt directly on each utterance:
   - Example:  
     > “Given the text below, classify its emotional polarity (positive/neutral/negative),  
     > rate emotional intensity (0–5), and empathy (0–5). Respond as JSON.”
