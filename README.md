@@ -7,8 +7,8 @@
 - [Task 2: Model Implementations](#task-2-model-implementations)
   - [Model 1: ANN with SentenceTransformer Embeddings](#model-1-ann-with-sentencetransformer-embeddings)
   - [Model 2: RNN with GloVe Embeddings](#model-2-rnn-with-glove-embeddings)
-  - [Model 3: OpenAI Prompting (GPT-based Zero/Few-Shot)](#model-3-openai-prompting-gpt-based-zerofew-shot)
-  - [Model 4: BERT Transformer Fine-Tuning](#model-4-bert-transformer-fine-tuning)
+  - [Model 3: BERT Transformer Fine-Tuning](#model-3-bert-transformer-fine-tuning)
+  - [Model 4: OpenAI Prompting (GPT-based Zero/Few-Shot)](#model-4-openai-prompting-gpt-based-zerofew-shot)
 - [Task 3: Evaluation and Results](#task-3-evaluation-and-results)
   - [Classification Metrics](#classification-metrics)
   - [Regression Metrics](#regression-metrics)
@@ -21,12 +21,11 @@
 
 ## Dataset Overview
 The dataset used for this project contains conversational text samples labeled for **three outputs**:
-1. **Emotion (categorical)** – positive, neutral, negative  
+1. **Emotional Polarity (categorical)** – positive, neutral, negative  
 2. **Emotion Intensity (regression)** – ordinal 0–5 scale  
 3. **Empathy (regression)** – ordinal 0–5 scale  
 
 Total samples: ~20k  
-Split: 70% train, 15% validation, 15% test  
 Source: TRAC2 / EmpatheticDialogues corpus (CSV formatted)  
 
 Each record includes:
@@ -36,14 +35,14 @@ Each record includes:
 - `emotion_intensity`: numeric  
 - `empathy`: numeric  
 
-### Data Preprocessing and Splits
-- Lower-casing, punctuation and stopword removal using NLTK.  
-- Tokenization handled differently per model (BERT tokenizer, GloVe tokenizer, etc.).  
-- Stratified splits to preserve emotion distribution.  
 - CSV files:
   - `trac2_CONVT_train.csv`
   - `trac2_CONVT_val.csv`
   - `trac2_CONVT_test.csv`
+
+### Data Preprocessing and Splits
+- Lower-casing, punctuation and stopword removal using NLTK.  
+- Tokenization handled differently per model (BERT tokenizer, GloVe tokenizer, etc.).   
 
 ---
 
@@ -51,48 +50,59 @@ Each record includes:
 
 ## Model 1: ANN with SentenceTransformer Embeddings
 **Implementation Details**
-- Used `sentence-transformers/all-MiniLM-L6-v2` to convert sentences into 384-dimensional dense vectors.
+- Used `sentence-transformers/all-MiniLM-L6-v2` to convert sentences into 384-dimensional dense vectors
 - Each vector fed into a two-branch neural network:
-  - **Classification head:** 2 fully connected layers with ReLU → Softmax (3 classes).
-  - **Regression heads:** 2 dense layers each producing a single value for intensity and empathy.
-- Optimizer: AdamW, LR=1e-4, batch size=64, dropout=0.3.
-- Losses combined as weighted sum: `CrossEntropy + 0.5*(MSE_intensity + MSE_empathy)`.
+  - **Classification head:** 2 fully connected layers with ReLU → Softmax 
+  - **Regression heads:** 2 fully connected layers with ReLU
+- Optimizer: AdamW, LR=1e-3, batch size=32, dropout=0.2, epoch=30
 
 **Results (Dev Set)**
-- Accuracy: 0.72  
-- F1 (macro): 0.70  
-- MSE (Intensity): 0.40  
-- MSE (Empathy): 0.76  
-
-**Notes**
-- Pre-computed embeddings cached to speed up training.
-- Sensitive to learning rate — higher LR led to instability.
+- Accuracy: 0.655
+- F1: 0.649  
+- MSE (Intensity): 0.42
+- MSE (Empathy): 0.84
 
 ---
 
 ## Model 2: RNN with GloVe Embeddings
 **Implementation Details**
-- Tokenized text with Keras tokenizer, padded to 100 tokens.
+- Tokenized text and padding to 128 tokens per sentence
 - Initialized embedding matrix from `glove.6B.100d.txt`.
 - Model architecture:
-  - Embedding layer (frozen or fine-tuned)
+  - Embedding layer 
   - Bidirectional LSTM(128) + Dropout(0.2)
   - Shared hidden layer → three outputs (1 classification, 2 regression).
-- Optimizer: Adam (LR=1e-3), batch size=64, loss same as Model 1.
+- Optimizer: Adam (LR=1e-3), batch size=32, epoch=40
 
 **Results (Dev Set)**
-- Accuracy: 0.68  
-- F1 (macro): 0.66  
-- MSE (Intensity): 0.43  
-- MSE (Empathy): 0.79  
-
-**Notes**
-- Slower training than ANN due to sequence processing.
-- Captures sequential context but less robust on short texts.
+- Accuracy: 0.599  
+- F1 (macro): 0.596  
+- MSE (Intensity): 0.55 
+- MSE (Empathy): 1.14
 
 ---
 
-## Model 3: OpenAI Prompting (GPT-based Zero/Few-Shot)
+
+## Model 3: BERT Transformer Fine-Tuning
+**Implementation Details**
+- Base model: `bert-base-uncased` via Hugging Face Transformers.
+- Multi-head architecture:
+  - Shared BERT encoder
+  - One dense layer for classification logits 
+  - Two regression heads for intensity and empathy.
+- Optimizer: AdamW (LR=2e-5), Scheduler: linear warmup, weight decay = 0.01
+- Fine-tuned for 4 epochs on GPU A100 (40 GB VRAM).
+- Used Trainer API with custom compute_metrics (F1, MSE)
+
+**Results (Dev Set)**
+- Accuracy: 0.725
+- F1: 0.718
+- MSE (Intensity): 0.40  
+- MSE (Empathy): 0.76  
+
+---
+
+## Model 4: OpenAI Prompting (GPT-based Zero/Few-Shot)
 **Implementation Details**
 - Used GPT-4 API to prompt directly on each utterance:
   - Example:  
@@ -100,39 +110,13 @@ Each record includes:
     > rate emotional intensity (0–5), and empathy (0–5). Respond as JSON.”
 - Batched inference using Python `openai` client.
 - No explicit training; relies on model understanding.
+- Only use 500 samples in training set to train and 100 samples in dev set to test
 
 **Results (Dev Set)**
-- Accuracy: 0.77  
-- F1 (macro): 0.74  
-- MSE (Intensity): 0.36  
-- MSE (Empathy): 0.69  
-
-**Notes**
-- Few-shot examples improved consistency.
-- Expensive for large datasets; best for evaluation or bootstrapping.
-
----
-
-## Model 4: BERT Transformer Fine-Tuning
-**Implementation Details**
-- Base model: `bert-base-uncased` via Hugging Face Transformers.
-- Multi-head architecture:
-  - Shared BERT encoder.
-  - One dense layer for classification logits (3 classes).
-  - Two regression heads for intensity and empathy.
-- Optimizer: AdamW (LR=2e-5), Scheduler: linear warmup.
-- Fine-tuned for 4 epochs on GPU (40 GB VRAM).
-- Used Trainer API with custom compute_metrics (F1, MSE).
-
-**Results (Dev Set)**
-- Accuracy: 0.73  
-- F1 (macro): 0.71  
-- MSE (Intensity): 0.40  
-- MSE (Empathy): 0.76  
-
-**Notes**
-- Best generalization among trained models.
-- Overfits after ~4 epochs — early stopping applied.
+- Accuracy: 0.770  
+- F1: 0.779
+- MSE (Intensity): 0.58
+- MSE (Empathy): 1.02
 
 ---
 
@@ -154,11 +138,6 @@ Each record includes:
 | GPT Prompting | **0.36** | **0.69** | **0.32** | **0.61** |
 | BERT Fine-Tuned | 0.40 | 0.76 | 0.38 | 0.67 |
 
-## Confusion Matrices and Error Analysis
-- Most misclassifications occur between *neutral* and *positive* classes.
-- BERT and GPT better handle ambiguous emotional tone.
-- Regression errors are higher for empathy extremes (0 or 5) due to limited samples.
-
 ---
 
 # Task 4: Reproducibility Notes and Running Instructions
@@ -171,6 +150,6 @@ Each record includes:
 - Pandas, Numpy, Scikit-learn, Matplotlib  
 
 ## How to Run
-1. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
+To reproduce the results, the project can be executed either on **Google Colab** or on a **local machine**. The recommended approach is Google Colab, as it provides a preconfigured environment with GPU support and minimal setup effort. Users simply open the Colab notebook, switch the runtime to GPU under “Runtime > Change runtime type > Hardware accelerator,” and verify the GPU using `torch.cuda.get_device_name(0)`. After cloning or uploading the project repository, install dependencies with `!pip install -r requirements.txt`
+
+For local execution, I recommend installing **pyenv** to manage Python versions and create a clean environment. Once Python 3.11 is installed through pyenv, set up a virtual environment and run `pip install -r requirements.txt` to install all dependencies. Training and evaluation commands remain identical to those used on Colab. 
