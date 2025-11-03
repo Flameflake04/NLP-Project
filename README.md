@@ -37,7 +37,7 @@ Each record includes:
 
 - CSV files:
   - `trac2_CONVT_train.csv`
-  - `trac2_CONVT_val.csv`
+  - `trac2_CONVT_dev.csv`
   - `trac2_CONVT_test.csv`
 
 ### Data Preprocessing and Splits
