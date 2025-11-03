@@ -122,21 +122,22 @@ Each record includes:
 
 # Task 3: Evaluation and Results
 
-## Classification Metrics
-| Model | Accuracy | F1 (macro) |
+## Classification Metrics 
+| Model | Accuracy | F1 |
 |--------|-----------|------------|
-| ANN (MiniLM) | 0.72 | 0.70 |
-| RNN (GloVe) | 0.68 | 0.66 |
-| GPT Prompting | **0.77** | **0.74** |
-| BERT Fine-Tuned | 0.73 | 0.71 |
+| Base Guessing | 0.333 | 0.333 |
+| ANN + ST | 0.655 | 0.649 |
+| RNN (GloVe) | 0.599 | 0.596 |
+| BERT Fine-Tuned | 0.725 | 0.718 |
+| GPT Prompting | 0.770 | 0.779 |
 
 ## Regression Metrics
-| Model | MSE Intensity | MSE Empathy | MAE Intensity | MAE Empathy |
-|--------|---------------|--------------|----------------|--------------|
-| ANN (MiniLM) | 0.40 | 0.76 | 0.39 | 0.66 |
-| RNN (GloVe) | 0.43 | 0.79 | 0.41 | 0.69 |
-| GPT Prompting | **0.36** | **0.69** | **0.32** | **0.61** |
-| BERT Fine-Tuned | 0.40 | 0.76 | 0.38 | 0.67 |
+| Model | MSE Intensity | MSE Empathy |
+|--------|---------------|--------------|
+| ANN + ST | 0.42 | 0.84 |
+| RNN (GloVe) | 0.55 | 1.14 |
+| BERT Fine-Tuned | 0.40 | 0.76 |
+| GPT Prompting | 0.58 | 1.02 |
 
 ---
 
